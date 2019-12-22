@@ -1,0 +1,84 @@
+version: '3'
+
+services:
+
+  mongo:
+    image: mongo
+    container_name: mongo
+    ports:
+      - 27017:27017
+    volumes:
+      - "./data/mongo:/data/db"
+    
+  postgres:
+    image: postgres:9.6.2
+    container_name: postgres
+    ports:
+      - 5432:5432
+    environment: 
+      POSTGRES_PASSWORD: admin
+      PGDATA: /var/lib/postgressql/data/pgdata
+    volumes: 
+      - "./data/postgres:/var/lib/postgressql/data/pgdata"
+
+  mysql:
+    image: mysql:5.7
+    container_name: mysql
+    ports:
+      - 3306:3306
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8 --collation-server=utf8_general_ci
+    volumes: 
+      - "./data/mysql:/var/lib/mysql"
+    environment: 
+      - MYSQL_DATABASE=testdb
+      - MYSQL_ROOT_PASSWORD=mysql_admin
+
+  redis:
+    image: redis:4.0.13
+    container_name: redis
+    command: --appendonly yes
+    ports: 
+      - 6379:6379
+    volumes: 
+      - "./data/redis:/data"
+
+  zookeeper:
+    image: wurstmeister/zookeeper
+    container_name: zookeeper
+    ports: 
+      - 2181:2181
+    networks: 
+      - app_net
+
+  kafka:
+    image: wurstmeister/kafka
+    container_name: kafka
+    depends_on: [zookeeper]
+    ports: 
+      - 9092:9092
+    environment: 
+      KAFKA_ADVERTISED_HOST_NAME: 127.0.0.1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CREATE_TOPICS: "json_topic:1:1"
+    volumes: 
+      - "./data/kafka:/kafka"
+    networks: 
+      - app_net
+
+  rabbitmq:
+    hostname: rabbitmq
+    image: rabbitmq:management
+    container_name: rabbitmq
+    ports: 
+      - 15672:15672
+      - 5672:5672
+    volumes: 
+      - "./data/rabbitmq:/var/lib/rabbitmq"
+
+networks:
+  app_net:
+    external: true
+  
+
+
+  
